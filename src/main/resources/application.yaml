@@ -1,3 +1,16 @@
 spring:
   application:
     name: nethackchatbot
+
+ai:
+  openai:
+    api-key: ${OPENAI_API_KEY}
+    model: ${OPENAI_MODEL:deepseek-v4-flash}
+    url: ${OPENAI_URL:https://api.deepseek.com}
+
+chat:
+  api-token: ${CHAT_API_TOKEN}
+  rate-limit:
+    capacity: ${RATE_LIMIT_CAPACITY:10}
+    refill-tokens: ${RATE_LIMIT_REFILL_TOKENS:10}
+    refill-seconds: ${RATE_LIMIT_REFILL_SECONDS:60}

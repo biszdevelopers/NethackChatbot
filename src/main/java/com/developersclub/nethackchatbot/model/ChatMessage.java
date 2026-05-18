@@ -1,5 +1,5 @@
 package com.developersclub.nethackchatbot.model;
 
-public class ChatMessage {
+public record ChatMessage(String role, String content){
     
 }
