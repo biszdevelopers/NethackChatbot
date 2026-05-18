@@ -1,0 +1,3 @@
+[submodule "src/main/resources/static/nethack-assistants"]
+	path = src/main/resources/static/nethack-assistants
+	url = https://github.com/biszdevelopers/nethack-assistants.git
