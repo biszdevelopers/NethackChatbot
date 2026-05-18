@@ -6,8 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -19,10 +21,9 @@ import java.util.Map;
 @Service
 public class PromptBuilder {
     private static final Logger log=LoggerFactory.getLogger(PromptBuilder.class);
-    private static final String BASE_SYSTEM_PROMPT="You are a knowledgeable NetHack assistant. Answer questions about gameplay, commands, item identification, strategy, and lore. Be concise and helpful. Never suggest cheating or spoiling unless explicitly asked.";
     private static final String PROMPTS_DIRECTORY="classpath:static/nethack-assistants/prompts/*.md";
     private final ResourcePatternResolver resourceResolver;
-    private final Map<String, String> promptAdditions=new LinkedHashMap<>();
+    private final Map<String, String> prompts=new LinkedHashMap<>();
 
     public PromptBuilder(ResourcePatternResolver resourceResolver){
         this.resourceResolver=resourceResolver;
@@ -31,13 +32,15 @@ public class PromptBuilder {
     public void loadPrompts(){
         try{
             Resource[] resources=resourceResolver.getResources(PROMPTS_DIRECTORY);
-            log.info("Found{} prompt files", resources.length);
+            log.info("Found {} prompt files", resources.length);
             for (Resource resource:resources){
                 String filename=resource.getFilename();
                 if (filename!=null&&filename.endsWith(".md")){
                     String promptType=filename.substring(0, filename.length() - 3);
-                    String content=FileCopyUtils.copyToString(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)).trim();
-                    promptAdditions.put(promptType, content);
+                    String content=FileCopyUtils.copyToString(
+                        new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)
+                    ).trim();
+                    prompts.put(promptType, content);
                     log.info("Loaded prompt type '{}'", promptType);
                 }
             }
@@ -47,11 +50,10 @@ public class PromptBuilder {
         }
     }
     public List<ChatMessage> buildMessages(String userMessage, String promptType){
-        String systemPrompt=BASE_SYSTEM_PROMPT;
-        if (promptType!=null&&promptAdditions.containsKey(promptType)){
-            systemPrompt+="\n"+promptAdditions.get(promptType);
+        String systemPrompt=prompts.get(promptType);
+        if (systemPrompt==null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Prompt type '"+promptType+"' not available");
         }
-
         return List.of(
             new ChatMessage("system", systemPrompt),
             new ChatMessage("user", userMessage)
@@ -59,6 +61,6 @@ public class PromptBuilder {
     }
 
     public List<String> getAvailablePromptTypes(){
-        return new ArrayList<>(promptAdditions.keySet());
+        return new ArrayList<>(prompts.keySet());
     }
 }

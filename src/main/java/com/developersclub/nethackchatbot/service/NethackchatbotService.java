@@ -14,17 +14,16 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class NethackchatotService {
-
+public class NethackchatbotService {
     private final PromptBuilder promptBuilder;
     private final AiClient aiClient;
     private final RateLimiterService rateLimiter;
 
-    public ChatResponse processMessage(ChatRequest request){
+    public ChatResponse processMessage(ChatRequest request, String promptType){
         if (!rateLimiter.tryConsume(request.getUserId())){
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Rate limit exceeded. Please wait before sending more messages.");
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"Rate limit exceeded. Please wait before sending more messages.");
         }
-        List<ChatMessage> messages=promptBuilder.buildMessages(request.getMessage(), request.getPromptType());
+        List<ChatMessage> messages=promptBuilder.buildMessages(request.getMessage(), promptType);
         String aiReply=aiClient.getCompletion(messages);
         return new ChatResponse(aiReply);
     }
